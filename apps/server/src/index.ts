@@ -4,18 +4,26 @@ import { existsSync } from "node:fs";
 import Fastify, { type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { env } from "./env.js";
 import { initObservability, Sentry } from "./observability.js";
+import { db } from "./db/client.js";
 import annotationsRoutes from "./routes/annotations.js";
 import commentsRoutes from "./routes/comments.js";
 import eventsRoutes from "./routes/events.js";
 import webhooksRoutes from "./routes/webhooks.js";
 import mcpRoutes from "./routes/mcp.js";
+import adminRoutes from "./routes/admin.js";
 import { processDueWebhookDeliveries } from "./webhooks/dispatcher.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 initObservability();
+
+// Sem exec/shell disponível no container em produção (Easypanel) — migração roda no boot.
+// migrationsFolder aponta pro mesmo lugar em dev (tsx a partir de src/) e prod (node a partir
+// de dist/), porque o Dockerfile copia src/db/migrations pra dist/db/migrations no build.
+await migrate(db, { migrationsFolder: path.join(__dirname, "db/migrations") });
 
 const app = Fastify({ logger: true });
 
@@ -35,6 +43,7 @@ await app.register(commentsRoutes);
 await app.register(eventsRoutes);
 await app.register(webhooksRoutes);
 await app.register(mcpRoutes);
+await app.register(adminRoutes);
 
 app.get("/health", async () => ({ ok: true }));
 

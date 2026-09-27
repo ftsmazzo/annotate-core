@@ -1,10 +1,7 @@
-import { randomBytes } from "node:crypto";
-import { db } from "../db/client.js";
-import { projects, projectTokens } from "../db/schema.js";
-import { hashToken, tokenPrefix } from "../plugins/auth.js";
+import { createProjectWithTokens } from "../admin.js";
 
-// Bootstrap de projeto: não existe UI de criação de projeto na v1 (sem contas de usuário),
-// então isso roda uma vez por projeto novo, direto no ambiente onde o server está deployado.
+// Bootstrap de projeto para uso local/dev (com shell). Em produção (sem exec no container),
+// use a rota POST /api/v1/admin/projects (ver apps/server/src/routes/admin.ts).
 // Uso: pnpm --filter server exec tsx src/scripts/create-project.ts "Meu Site" meu-site
 
 const [name, slugArg] = process.argv.slice(2);
@@ -12,33 +9,8 @@ if (!name) {
   console.error('Uso: tsx src/scripts/create-project.ts "Nome do Projeto" [slug]');
   process.exit(1);
 }
-const slug = slugArg ?? name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-const [project] = await db.insert(projects).values({ name, slug }).returning();
-
-function genToken(prefix: string) {
-  return `${prefix}_${randomBytes(24).toString("hex")}`;
-}
-
-const widgetToken = genToken("atn_w");
-const accessToken = genToken("atn_a");
-
-await db.insert(projectTokens).values([
-  {
-    projectId: project.id,
-    tokenHash: hashToken(widgetToken),
-    tokenPrefix: tokenPrefix(widgetToken),
-    kind: "widget",
-    label: "widget público (embutido no site)",
-  },
-  {
-    projectId: project.id,
-    tokenHash: hashToken(accessToken),
-    tokenPrefix: tokenPrefix(accessToken),
-    kind: "access",
-    label: "acesso do time + agentes (MCP/REST)",
-  },
-]);
+const { project, widgetToken, accessToken } = await createProjectWithTokens(name, slugArg);
 
 console.log(`Projeto criado: ${project.name} (${project.slug})\n`);
 console.log("Tag do widget para embutir no site:");
