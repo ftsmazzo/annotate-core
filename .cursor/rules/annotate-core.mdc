@@ -1,0 +1,6 @@
+---
+description: Regras do projeto annotate-core
+alwaysApply: true
+---
+
+Fonte única de verdade: [CLAUDE.md](../../CLAUDE.md) na raiz do repositório. Leia esse arquivo antes de editar código aqui — não duplique as regras dele neste arquivo.

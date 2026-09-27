@@ -1,10 +1,11 @@
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { existsSync } from "node:fs";
-import Fastify from "fastify";
+import Fastify, { type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
 import { env } from "./env.js";
+import { initObservability, Sentry } from "./observability.js";
 import annotationsRoutes from "./routes/annotations.js";
 import commentsRoutes from "./routes/comments.js";
 import eventsRoutes from "./routes/events.js";
@@ -14,7 +15,16 @@ import { processDueWebhookDeliveries } from "./webhooks/dispatcher.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+initObservability();
+
 const app = Fastify({ logger: true });
+
+app.setErrorHandler((err: FastifyError, req, reply) => {
+  app.log.error(err);
+  Sentry.captureException(err);
+  // Nunca vaza a mensagem crua do Postgres/driver pro cliente — só um erro genérico.
+  reply.code(err.statusCode ?? 500).send({ error: "internal_error" });
+});
 
 // Liberado geral: o widget roda embutido em qualquer domínio dos sites do usuário,
 // então não dá pra restringir por origin fixo (mesmo modelo do endpoint de ingest do Sentry).
