@@ -62,6 +62,18 @@ export default async function adminRoutes(app: FastifyInstance) {
     return { project: { id: project.id, name: project.name, slug: project.slug }, annotations: rows.map(serializeAnnotation) };
   });
 
+  // Exclusão real (cascade via FK) — só dispara quando o USUÁRIO clica no botão da UI,
+  // nunca chamada automaticamente por um agente de IA.
+  app.delete("/api/v1/admin/projects/:slug", async (req, reply) => {
+    if (!isValidAdminToken(req.headers["x-admin-token"] as string | undefined)) {
+      return reply.code(401).send({ error: "invalid_admin_token" });
+    }
+    const { slug } = req.params as { slug: string };
+    const [deleted] = await db.delete(projects).where(eq(projects.slug, slug)).returning();
+    if (!deleted) return reply.code(404).send({ error: "project_not_found" });
+    return { deleted: true, slug };
+  });
+
   app.post("/api/v1/admin/projects", async (req, reply) => {
     if (!isValidAdminToken(req.headers["x-admin-token"] as string | undefined)) {
       return reply.code(401).send({ error: "invalid_admin_token" });

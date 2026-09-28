@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useLocation } from "react-router-dom";
 import { addComment, getAnnotation, updateAnnotationStatus, type Annotation } from "../api.js";
+import PencilMark from "../components/PencilMark.js";
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Pendente",
@@ -38,9 +39,12 @@ export default function AnnotationDetail() {
   return (
     <div>
       <div className="topbar">
-        <div className="brand">
-          <span className="mark">✎</span> Annotate
-        </div>
+        <a href={`/admin`} className="brand" style={{ textDecoration: "none", color: "inherit" }}>
+          <span className="mark">
+            <PencilMark size={14} />
+          </span>
+          Annotate
+        </a>
         <div className="spacer" />
         <span className="project-name">{slug}</span>
       </div>

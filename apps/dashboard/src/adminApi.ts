@@ -52,3 +52,7 @@ export function createProject(name: string) {
     body: JSON.stringify({ name }),
   });
 }
+
+export function deleteProject(slug: string) {
+  return adminFetch<{ deleted: boolean }>(`/api/v1/admin/projects/${slug}`, { method: "DELETE" });
+}

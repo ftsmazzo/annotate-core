@@ -13,15 +13,23 @@ await build({
 });
 
 await build({
-  entryPoints: ["src/popup.ts"],
+  entryPoints: ["src/options.ts"],
   bundle: true,
   format: "iife",
   target: "es2018",
-  outfile: "dist/popup.js",
+  outfile: "dist/options.js",
+});
+
+await build({
+  entryPoints: ["src/background.ts"],
+  bundle: true,
+  format: "iife",
+  target: "es2018",
+  outfile: "dist/background.js",
 });
 
 copyFileSync("manifest.json", "dist/manifest.json");
-copyFileSync("popup.html", "dist/popup.html");
+copyFileSync("options.html", "dist/options.html");
 
 // Zip pronto pra baixar e "carregar sem compactação" — servido pelo próprio servidor
 // em /extension.zip, pra distribuir pro time por link em vez de caminho de pasta local.
