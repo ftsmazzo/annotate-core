@@ -33,7 +33,10 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
     headers: {
-      "content-type": "application/json",
+      // Só manda content-type: application/json quando REALMENTE tem corpo — senão o
+      // Fastify tenta interpretar um corpo vazio como JSON e responde 400 (foi exatamente
+      // o bug do botão "Excluir"/"Gerar novo link", que não mandam body nenhum).
+      ...(init?.body ? { "content-type": "application/json" } : {}),
       "x-admin-token": getAdminToken(),
       ...init?.headers,
     },
