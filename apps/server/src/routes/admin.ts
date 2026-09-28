@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { and, desc, eq } from "drizzle-orm";
-import { createProjectWithTokens } from "../admin.js";
+import { createProjectWithTokens, regenerateTokensForProject } from "../admin.js";
 import { db } from "../db/client.js";
 import { annotations, projects } from "../db/schema.js";
 import { serializeAnnotation } from "../serialize.js";
@@ -72,6 +72,22 @@ export default async function adminRoutes(app: FastifyInstance) {
     const [deleted] = await db.delete(projects).where(eq(projects.slug, slug)).returning();
     if (!deleted) return reply.code(404).send({ error: "project_not_found" });
     return { deleted: true, slug };
+  });
+
+  // Gera um par de tokens novo pra um projeto existente (revoga os antigos), sem apagar
+  // nada — resolve "perdi o token e agora preciso excluir o projeto inteiro pra recomeçar".
+  app.post("/api/v1/admin/projects/:slug/regenerate-tokens", async (req, reply) => {
+    if (!isValidAdminToken(req.headers["x-admin-token"] as string | undefined)) {
+      return reply.code(401).send({ error: "invalid_admin_token" });
+    }
+    const { slug } = req.params as { slug: string };
+    const result = await regenerateTokensForProject(slug);
+    if (!result) return reply.code(404).send({ error: "project_not_found" });
+    return {
+      project: { id: result.project.id, name: result.project.name, slug: result.project.slug },
+      widgetToken: result.widgetToken,
+      accessToken: result.accessToken,
+    };
   });
 
   app.post("/api/v1/admin/projects", async (req, reply) => {

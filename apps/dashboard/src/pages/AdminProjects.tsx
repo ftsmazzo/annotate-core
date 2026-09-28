@@ -4,6 +4,7 @@ import {
   deleteProject,
   getAdminToken,
   listProjects,
+  regenerateTokens,
   setAdminToken,
   type CreatedProject,
   type ProjectSummary,
@@ -31,6 +32,8 @@ export default function AdminProjects() {
   const [created, setCreated] = useState<CreatedProject | null>(null);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState<{ slug: string; name: string } | null>(null);
+  const [busySlug, setBusySlug] = useState<string | null>(null);
 
   async function loadProjects() {
     setError("");
@@ -65,13 +68,31 @@ export default function AdminProjects() {
     setProjects(null);
   }
 
-  async function handleDelete(slug: string, name: string) {
-    if (!window.confirm(`Excluir "${name}" (${slug})? Todas as anotações dele somem, sem volta.`)) return;
+  async function confirmDelete() {
+    if (!confirmTarget) return;
+    setBusySlug(confirmTarget.slug);
+    setError("");
     try {
-      await deleteProject(slug);
+      await deleteProject(confirmTarget.slug);
+      setConfirmTarget(null);
       loadProjects();
     } catch {
-      setError("Falha ao excluir projeto.");
+      setError(`Falha ao excluir "${confirmTarget.name}".`);
+    } finally {
+      setBusySlug(null);
+    }
+  }
+
+  async function handleRegenerate(slug: string) {
+    setBusySlug(slug);
+    setError("");
+    try {
+      const result = await regenerateTokens(slug);
+      setCreated(result);
+    } catch {
+      setError("Falha ao gerar novo token — o projeto ainda existe, só tente de novo.");
+    } finally {
+      setBusySlug(null);
     }
   }
 
@@ -154,6 +175,8 @@ export default function AdminProjects() {
         <h1>Seus projetos</h1>
         <p className="subtitle">Cada projeto tem seu próprio widget, extensão e servidor MCP.</p>
 
+        {error && <p className="error-text" style={{ marginBottom: 16 }}>{error}</p>}
+
         <div className="stat-grid">
           <div className="stat-card">
             <div className="value">{projects?.length ?? 0}</div>
@@ -182,13 +205,14 @@ export default function AdminProjects() {
                 {loading ? "Criando…" : "Criar projeto"}
               </button>
             </div>
-            {error && <p className="error-text">{error}</p>}
           </div>
         )}
 
         {created && (
           <div className="created-box">
-            <h3>Projeto "{created.project.name}" criado ✓</h3>
+            <h3>
+              {created.project.name} — link e token prontos ✓
+            </h3>
             <p className="hint">Guarde esta tela — o token de acesso não é reexibido depois.</p>
 
             <p>
@@ -237,11 +261,15 @@ export default function AdminProjects() {
                 <a className="open-link" href={`/p/${p.slug}`}>
                   Ver anotações
                 </a>
-                <a className="open-link" href={`/install?slug=${p.slug}`}>
-                  Instalar
-                </a>
                 <button
-                  onClick={() => handleDelete(p.slug, p.name)}
+                  onClick={() => handleRegenerate(p.slug)}
+                  disabled={busySlug === p.slug}
+                  style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--primary)", padding: "6px 12px", fontSize: 12.5 }}
+                >
+                  {busySlug === p.slug ? "Gerando…" : "Gerar novo link"}
+                </button>
+                <button
+                  onClick={() => setConfirmTarget({ slug: p.slug, name: p.name })}
                   style={{
                     background: "transparent",
                     border: "1px solid var(--border)",
@@ -257,6 +285,38 @@ export default function AdminProjects() {
           ))}
         </div>
       </main>
+
+      {confirmTarget && (
+        <div
+          style={{
+            position: "fixed", inset: 0, background: "rgba(15,17,23,.5)",
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50,
+          }}
+        >
+          <div className="card" style={{ maxWidth: 380, boxShadow: "var(--shadow-lg)" }}>
+            <h3 style={{ fontSize: 16, marginBottom: 8 }}>Excluir "{confirmTarget.name}"?</h3>
+            <p className="hint">
+              O projeto <code>{confirmTarget.slug}</code> e todas as anotações dele somem — sem
+              volta.
+            </p>
+            <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setConfirmTarget(null)}
+                style={{ background: "transparent", border: "1px solid var(--border)" }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={busySlug === confirmTarget.slug}
+                style={{ background: "var(--danger)", color: "#fff" }}
+              >
+                {busySlug === confirmTarget.slug ? "Excluindo…" : "Sim, excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

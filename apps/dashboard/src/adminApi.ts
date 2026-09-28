@@ -56,3 +56,7 @@ export function createProject(name: string) {
 export function deleteProject(slug: string) {
   return adminFetch<{ deleted: boolean }>(`/api/v1/admin/projects/${slug}`, { method: "DELETE" });
 }
+
+export function regenerateTokens(slug: string) {
+  return adminFetch<CreatedProject>(`/api/v1/admin/projects/${slug}/regenerate-tokens`, { method: "POST" });
+}
