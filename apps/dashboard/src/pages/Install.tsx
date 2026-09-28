@@ -5,14 +5,18 @@ export default function Install() {
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
   const endpoint = params.get("endpoint") ?? window.location.origin;
-  const [copied, setCopied] = useState(false);
+  const accessToken = params.get("accessToken") ?? "";
+  const slug = params.get("slug") ?? "projeto";
+  const [copied, setCopied] = useState<string | null>(null);
 
-  function copyToken() {
-    navigator.clipboard?.writeText(token).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  function copy(text: string, key: string) {
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
     });
   }
+
+  const mcpCommand = `claude mcp add --transport http annotate-${slug} ${endpoint}/mcp -H "Authorization: Bearer ${accessToken}" -s user`;
 
   return (
     <div className="page install-page">
@@ -33,7 +37,8 @@ export default function Install() {
         </li>
         <li>
           Clique com o botão direito no arquivo baixado → <strong>Extrair Tudo</strong> (ou
-          "Extrair aqui"). Isso cria uma pasta com os arquivos da extensão.
+          "Extrair aqui"). Deve aparecer uma pasta chamada <strong>annotate-extension</strong>{" "}
+          — é ela que você vai usar no passo 5, nunca os arquivos soltos.
         </li>
         <li>
           Abra o Chrome (ou Edge) e digite na barra de endereço:{" "}
@@ -44,8 +49,10 @@ export default function Install() {
           página).
         </li>
         <li>
-          Clique em <strong>"Carregar sem compactação"</strong> e selecione a pasta que você
-          extraiu no passo 2.
+          Clique em <strong>"Carregar sem compactação"</strong> e selecione a pasta{" "}
+          <strong>annotate-extension</strong> (a que tem o arquivo <code>manifest.json</code>{" "}
+          dentro — se aparecer uma pasta dentro da outra com o mesmo nome, entre nela e use a
+          de dentro).
         </li>
         <li>
           Clique no ícone da extensão (canto superior direito do navegador, perto da barra de
@@ -65,7 +72,9 @@ export default function Install() {
           <label>Token do projeto (widget)</label>
           <pre>{token || "(peça esse token a quem criou o projeto em /admin)"}</pre>
           {token && (
-            <button onClick={copyToken}>{copied ? "Copiado ✓" : "Copiar token"}</button>
+            <button onClick={() => copy(token, "token")}>
+              {copied === "token" ? "Copiado ✓" : "Copiar token"}
+            </button>
           )}
         </div>
       </div>
@@ -81,6 +90,31 @@ export default function Install() {
           clique no botão de recarregar (↻) no card da extensão.
         </li>
       </ol>
+
+      <h2>Conectar a IA (Claude Code / Cursor)</h2>
+      <p className="hint">
+        Isso deixa a IA ler o que foi reportado e resolver sozinha. Rode o comando abaixo num
+        terminal (Prompt de Comando, PowerShell, ou o terminal do próprio Claude Code/Cursor):
+      </p>
+      {accessToken ? (
+        <>
+          <pre>{mcpCommand}</pre>
+          <button onClick={() => copy(mcpCommand, "mcp")}>
+            {copied === "mcp" ? "Copiado ✓" : "Copiar comando"}
+          </button>
+        </>
+      ) : (
+        <p className="hint">
+          (Esse link não veio com o token de acesso — pegue o comando completo na tela de
+          criação do projeto em <code>/admin</code>.)
+        </p>
+      )}
+      <p className="hint">
+        Depois de rodar, <strong>abra uma conversa NOVA</strong> no Claude Code ou Cursor (uma já
+        aberta não enxerga a conexão nova) e pergunte algo como "liste as anotações pendentes do
+        projeto {slug}". Se ela responder com a lista (ou "nenhuma pendente"), a conexão
+        funcionou.
+      </p>
     </div>
   );
 }

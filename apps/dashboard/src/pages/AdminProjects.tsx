@@ -101,7 +101,7 @@ export default function AdminProjects() {
             <strong>2. Link de instalação da extensão</strong> — manda pro time, tem passo a
             passo e o token já preenchido:
           </p>
-          <pre>{`${origin()}/install?token=${created.widgetToken}&endpoint=${encodeURIComponent(origin())}`}</pre>
+          <pre>{`${origin()}/install?token=${created.widgetToken}&endpoint=${encodeURIComponent(origin())}&accessToken=${created.accessToken}&slug=${created.project.slug}`}</pre>
 
           <p>
             <strong>3. Alternativa: widget fixo no site</strong> — só se quiser o lápis sempre

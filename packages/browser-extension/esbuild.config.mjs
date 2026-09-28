@@ -31,7 +31,10 @@ await new Promise((resolve, reject) => {
   output.on("close", resolve);
   archive.on("error", reject);
   archive.pipe(output);
-  archive.directory("dist/", false);
+  // Nomeado (não "false") de propósito: sem isso, o zip solta os arquivos direto na pasta
+  // onde a pessoa extrai ("Extrair aqui"), sem criar uma pasta própria — foi exatamente
+  // o que aconteceu no teste real do usuário.
+  archive.directory("dist/", "annotate-extension");
   archive.finalize();
 });
 
