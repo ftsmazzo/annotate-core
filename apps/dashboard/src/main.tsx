@@ -3,17 +3,23 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ProjectAnnotations from "./pages/ProjectAnnotations.js";
 import AnnotationDetail from "./pages/AnnotationDetail.js";
+import AdminProjects from "./pages/AdminProjects.js";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
+        <Route path="/admin" element={<AdminProjects />} />
         <Route path="/p/:slug" element={<ProjectAnnotations />} />
         <Route path="/p/:slug/annotations/:id" element={<AnnotationDetail />} />
         <Route
           path="*"
-          element={<div className="empty-state">Abra pelo link do seu projeto: /p/&lt;slug&gt;?t=&lt;token&gt;</div>}
+          element={
+            <div className="empty-state">
+              Nenhum projeto aberto. <a href="/admin">Ir para Administração</a>
+            </div>
+          }
         />
       </Routes>
     </BrowserRouter>

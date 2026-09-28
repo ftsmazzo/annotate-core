@@ -28,4 +28,15 @@ body {
 .comment-form input, .comment-form textarea {
   padding: 8px; border-radius: 6px; border: 1px solid #d1d5db; font-family: inherit;
 }
-pre { background: #111827; color: #d1d5db; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; }
+pre { background: #111827; color: #d1d5db; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+.admin-token-row { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+.admin-token-row input {
+  flex: 1; min-width: 200px; padding: 8px; border-radius: 6px; border: 1px solid #d1d5db; font-family: inherit;
+}
+.admin-token-row button {
+  padding: 8px 16px; border-radius: 6px; border: none; background: #2563eb; color: #fff; cursor: pointer;
+}
+.created-box { background: #fff; border: 1px solid #a7f3d0; border-radius: 8px; padding: 16px; margin: 16px 0; }
+.error-text { color: #dc2626; }
+.hint { color: #6b7280; font-size: 13px; }
+.admin-project-row { display: flex; justify-content: space-between; align-items: center; }

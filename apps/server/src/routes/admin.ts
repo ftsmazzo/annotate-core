@@ -1,7 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { desc } from "drizzle-orm";
 import { createProjectWithTokens } from "../admin.js";
+import { db } from "../db/client.js";
+import { projects } from "../db/schema.js";
 
 const CreateProjectInput = z.object({
   name: z.string().min(1).max(120),
@@ -22,6 +25,17 @@ function isValidAdminToken(provided: string | undefined): boolean {
  * dos tokens de projeto, que só quem administra a infraestrutura possui.
  */
 export default async function adminRoutes(app: FastifyInstance) {
+  app.get("/api/v1/admin/projects", async (req, reply) => {
+    if (!isValidAdminToken(req.headers["x-admin-token"] as string | undefined)) {
+      return reply.code(401).send({ error: "invalid_admin_token" });
+    }
+    const rows = await db
+      .select({ id: projects.id, name: projects.name, slug: projects.slug, createdAt: projects.createdAt })
+      .from(projects)
+      .orderBy(desc(projects.createdAt));
+    return { projects: rows };
+  });
+
   app.post("/api/v1/admin/projects", async (req, reply) => {
     if (!isValidAdminToken(req.headers["x-admin-token"] as string | undefined)) {
       return reply.code(401).send({ error: "invalid_admin_token" });
