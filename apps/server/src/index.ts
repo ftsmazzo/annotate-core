@@ -21,9 +21,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 initObservability();
 
 // Sem exec/shell disponível no container em produção (Easypanel) — migração roda no boot.
-// migrationsFolder aponta pro mesmo lugar em dev (tsx a partir de src/) e prod (node a partir
-// de dist/), porque o Dockerfile copia src/db/migrations pra dist/db/migrations no build.
-await migrate(db, { migrationsFolder: path.join(__dirname, "db/migrations") });
+// `pnpm deploy` (usado no Dockerfile) inclui src/ inteiro no pacote publicado, então
+// "../src/db/migrations" resolve tanto em dev (tsx a partir de src/) quanto em prod
+// (node a partir de dist/, com src/ como irmão de dist/ no output do deploy).
+await migrate(db, { migrationsFolder: path.join(__dirname, "../src/db/migrations") });
 
 const app = Fastify({ logger: true });
 

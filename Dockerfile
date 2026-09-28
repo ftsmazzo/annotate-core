@@ -1,25 +1,22 @@
-FROM node:20-alpine AS deps
+FROM node:20-alpine AS build
 WORKDIR /app
 RUN corepack enable
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-COPY apps/server/package.json apps/server/package.json
-COPY apps/dashboard/package.json apps/dashboard/package.json
-COPY packages/widget/package.json packages/widget/package.json
-COPY packages/shared-types/package.json packages/shared-types/package.json
-RUN pnpm install --frozen-lockfile
-
-FROM deps AS build
 COPY . .
-RUN pnpm --filter widget build \
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter shared-types build \
+ && pnpm --filter widget build \
  && pnpm --filter dashboard build \
  && pnpm --filter server build
+# pnpm deploy resolve o node_modules de verdade do pacote server (inclusive workspace deps
+# como o shared-types), diferente de copiar node_modules na mão — foi a causa real do
+# ERR_MODULE_NOT_FOUND (fastify) no primeiro deploy: node_modules da raiz não tem os
+# symlinks específicos de cada pacote do monorepo.
+RUN pnpm --filter server deploy --prod /app/deploy/server
 
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/apps/server/dist ./dist
-COPY --from=build /app/apps/server/src/db/migrations ./dist/db/migrations
+COPY --from=build /app/deploy/server ./
 COPY --from=build /app/packages/widget/dist ./dist/public/widget
 COPY --from=build /app/apps/dashboard/dist ./dist/public/dashboard
 EXPOSE 3000
