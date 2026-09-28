@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Annotate — Visual Feedback",
+  "version": "0.1.0",
+  "description": "Ativa o lápis de anotação visual em qualquer site aberto no navegador, sem precisar editar o código do site.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
