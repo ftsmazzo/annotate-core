@@ -19,7 +19,13 @@ export default function Install() {
   const mcpCommand = `claude mcp add --transport http annotate-${slug} ${endpoint}/mcp -H "Authorization: Bearer ${accessToken}" -s user`;
 
   return (
-    <div className="page install-page">
+    <div>
+      <div className="topbar">
+        <div className="brand">
+          <span className="mark">✎</span> Annotate
+        </div>
+      </div>
+      <div className="page install-page">
       <h1>Instalar a extensão Annotate</h1>
       <p className="hint">
         Isso ativa um lápis (✎) em qualquer site que você abrir no navegador, pra reportar
@@ -115,6 +121,7 @@ export default function Install() {
         projeto {slug}". Se ela responder com a lista (ou "nenhuma pendente"), a conexão
         funcionou.
       </p>
+      </div>
     </div>
   );
 }

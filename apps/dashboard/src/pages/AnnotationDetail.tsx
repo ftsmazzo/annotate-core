@@ -2,6 +2,14 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useLocation } from "react-router-dom";
 import { addComment, getAnnotation, updateAnnotationStatus, type Annotation } from "../api.js";
 
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Pendente",
+  in_progress: "Em andamento",
+  resolved: "Resolvida",
+  wont_fix: "Não vai corrigir",
+  archived: "Arquivada",
+};
+
 export default function AnnotationDetail() {
   const { slug, id } = useParams();
   const location = useLocation();
@@ -13,7 +21,7 @@ export default function AnnotationDetail() {
     if (id) getAnnotation(id).then(setAnnotation);
   }, [id]);
 
-  if (!annotation) return <p>Carregando…</p>;
+  if (!annotation) return <div className="empty-state">Carregando…</div>;
 
   async function handleStatusChange(status: string) {
     if (!id) return;
@@ -28,54 +36,76 @@ export default function AnnotationDetail() {
   }
 
   return (
-    <div className="page">
-      <Link to={`/p/${slug}${location.search}`}>&larr; Voltar</Link>
-      <h1>{annotation.message}</h1>
-      <p className="annotation-meta">
-        {annotation.url} · <code>{annotation.selector}</code>
-      </p>
-
-      <div className="status-row">
-        Status: <strong>{annotation.status}</strong>
-        {["pending", "in_progress", "resolved", "wont_fix"].map((s) => (
-          <button key={s} onClick={() => handleStatusChange(s)} disabled={s === annotation.status}>
-            {s}
-          </button>
-        ))}
+    <div>
+      <div className="topbar">
+        <div className="brand">
+          <span className="mark">✎</span> Annotate
+        </div>
+        <div className="spacer" />
+        <span className="project-name">{slug}</span>
       </div>
 
-      {annotation.resolvedSummary && (
-        <div className="resolved-box">
-          <strong>Resolvido por {annotation.resolvedBy}:</strong> {annotation.resolvedSummary}
+      <div className="page">
+        <Link to={`/p/${slug}${location.search}`} className="hint">
+          &larr; Voltar
+        </Link>
+
+        <div className="card" style={{ marginTop: 14 }}>
+          <span className={`tag tag-${annotation.status}`}>
+            {STATUS_LABEL[annotation.status] ?? annotation.status}
+          </span>
+          <h1 style={{ marginTop: 10 }}>{annotation.message}</h1>
+          <p className="annotation-meta">
+            {annotation.url} · <code>{annotation.selector}</code>
+          </p>
+
+          <div className="status-row">
+            {["pending", "in_progress", "resolved", "wont_fix"].map((s) => (
+              <button key={s} onClick={() => handleStatusChange(s)} disabled={s === annotation.status}>
+                {STATUS_LABEL[s]}
+              </button>
+            ))}
+          </div>
+
+          {annotation.resolvedSummary && (
+            <div className="resolved-box">
+              <strong>Resolvido por {annotation.resolvedBy}:</strong> {annotation.resolvedSummary}
+            </div>
+          )}
+
+          {annotation.elementTextSnippet && (
+            <details style={{ marginTop: 14 }}>
+              <summary className="hint">Texto do elemento</summary>
+              <p>{annotation.elementTextSnippet}</p>
+            </details>
+          )}
+
+          {annotation.computedStyles && (
+            <details style={{ marginTop: 10 }}>
+              <summary className="hint">Estilos computados</summary>
+              <pre>{JSON.stringify(annotation.computedStyles, null, 2)}</pre>
+            </details>
+          )}
         </div>
-      )}
 
-      {annotation.elementTextSnippet && (
-        <details>
-          <summary>Texto do elemento</summary>
-          <p>{annotation.elementTextSnippet}</p>
-        </details>
-      )}
-
-      {annotation.computedStyles && (
-        <details>
-          <summary>Estilos computados</summary>
-          <pre>{JSON.stringify(annotation.computedStyles, null, 2)}</pre>
-        </details>
-      )}
-
-      <div className="comment-form">
-        <input
-          placeholder="Seu nome"
-          value={authorName}
-          onChange={(e) => setAuthorName(e.target.value)}
-        />
-        <textarea
-          placeholder="Adicionar comentário…"
-          value={commentBody}
-          onChange={(e) => setCommentBody(e.target.value)}
-        />
-        <button onClick={handleComment}>Comentar</button>
+        <h2>Comentários</h2>
+        <div className="card">
+          <div className="comment-form" style={{ marginTop: 0 }}>
+            <input
+              placeholder="Seu nome"
+              value={authorName}
+              onChange={(e) => setAuthorName(e.target.value)}
+            />
+            <textarea
+              placeholder="Adicionar comentário…"
+              value={commentBody}
+              onChange={(e) => setCommentBody(e.target.value)}
+            />
+            <button className="btn-primary" onClick={handleComment}>
+              Comentar
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
