@@ -98,13 +98,20 @@ export default function AdminProjects() {
           <pre>{`${origin()}/p/${created.project.slug}?t=${created.accessToken}`}</pre>
 
           <p>
-            <strong>2. Widget</strong> — cole isso na página que você quer corrigir (antes do{" "}
+            <strong>2. Link de instalação da extensão</strong> — manda pro time, tem passo a
+            passo e o token já preenchido:
+          </p>
+          <pre>{`${origin()}/install?token=${created.widgetToken}&endpoint=${encodeURIComponent(origin())}`}</pre>
+
+          <p>
+            <strong>3. Alternativa: widget fixo no site</strong> — só se quiser o lápis sempre
+            visível pra quem visita, sem precisar de extensão (cole antes do{" "}
             <code>&lt;/body&gt;</code>, funciona em qualquer stack):
           </p>
           <pre>{`<script src="${origin()}/widget.js" data-project="${created.widgetToken}" data-endpoint="${origin()}" async></script>`}</pre>
 
           <p>
-            <strong>3. Conectar no Claude Code</strong> (Cursor aceita o mesmo formato de servidor MCP remoto):
+            <strong>4. Conectar no Claude Code</strong> (Cursor aceita o mesmo formato de servidor MCP remoto):
           </p>
           <pre>{`claude mcp add --transport http annotate-${created.project.slug} ${origin()}/mcp -H "Authorization: Bearer ${created.accessToken}"`}</pre>
         </div>

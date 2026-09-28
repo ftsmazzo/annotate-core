@@ -40,3 +40,15 @@ pre { background: #111827; color: #d1d5db; padding: 12px; border-radius: 8px; ov
 .error-text { color: #dc2626; }
 .hint { color: #6b7280; font-size: 13px; }
 .admin-project-row { display: flex; justify-content: space-between; align-items: center; }
+.install-page ol { padding-left: 20px; }
+.install-page li { margin-bottom: 10px; line-height: 1.5; }
+.download-btn {
+  display: inline-block; margin: 12px 0 20px; padding: 12px 24px; border-radius: 8px;
+  background: #16a34a; color: #fff; text-decoration: none; font-weight: 600; font-size: 15px;
+}
+.install-fields { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+.install-fields label { display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+.install-fields button {
+  margin-top: 4px; padding: 6px 12px; border-radius: 6px; border: none;
+  background: #2563eb; color: #fff; cursor: pointer; font-size: 13px;
+}

@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import ProjectAnnotations from "./pages/ProjectAnnotations.js";
 import AnnotationDetail from "./pages/AnnotationDetail.js";
 import AdminProjects from "./pages/AdminProjects.js";
+import Install from "./pages/Install.js";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -11,6 +12,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <Routes>
         <Route path="/admin" element={<AdminProjects />} />
+        <Route path="/install" element={<Install />} />
         <Route path="/p/:slug" element={<ProjectAnnotations />} />
         <Route path="/p/:slug/annotations/:id" element={<AnnotationDetail />} />
         <Route
