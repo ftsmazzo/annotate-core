@@ -30,7 +30,9 @@ function init() {
       body: JSON.stringify({ message, ...annotation }),
     });
     if (!res.ok) {
-      console.error("[annotate-core] falha ao enviar anotação", await res.text());
+      const text = await res.text();
+      console.error("[annotate-core] falha ao enviar anotação", text);
+      throw new Error(text);
     }
   });
 }

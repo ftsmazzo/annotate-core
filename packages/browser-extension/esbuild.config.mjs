@@ -1,5 +1,6 @@
 import { build } from "esbuild";
-import { mkdirSync, copyFileSync } from "node:fs";
+import { mkdirSync, copyFileSync, createWriteStream } from "node:fs";
+import { ZipArchive } from "archiver";
 
 mkdirSync("dist", { recursive: true });
 
@@ -22,4 +23,17 @@ await build({
 copyFileSync("manifest.json", "dist/manifest.json");
 copyFileSync("popup.html", "dist/popup.html");
 
+// Zip pronto pra baixar e "carregar sem compactação" — servido pelo próprio servidor
+// em /extension.zip, pra distribuir pro time por link em vez de caminho de pasta local.
+await new Promise((resolve, reject) => {
+  const output = createWriteStream("annotate-extension.zip");
+  const archive = new ZipArchive({ zlib: { level: 9 } });
+  output.on("close", resolve);
+  archive.on("error", reject);
+  archive.pipe(output);
+  archive.directory("dist/", false);
+  archive.finalize();
+});
+
 console.log("Extensão buildada em packages/browser-extension/dist");
+console.log("Zip pronto em packages/browser-extension/annotate-extension.zip");

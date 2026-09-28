@@ -5,6 +5,7 @@ COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm --filter shared-types build \
  && pnpm --filter widget build \
+ && pnpm --filter browser-extension build \
  && pnpm --filter dashboard build \
  && pnpm --filter server build
 # pnpm deploy resolve o node_modules de verdade do pacote server (inclusive workspace deps
@@ -18,6 +19,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/deploy/server ./
 COPY --from=build /app/packages/widget/dist ./dist/public/widget
+COPY --from=build /app/packages/browser-extension/annotate-extension.zip ./dist/public/extension.zip
 COPY --from=build /app/apps/dashboard/dist ./dist/public/dashboard
 EXPOSE 3000
 CMD ["node", "dist/index.js"]

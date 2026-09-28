@@ -66,6 +66,21 @@ if (existsSync(widgetFile)) {
   app.log.warn(`widget não buildado ainda (${widgetFile} não existe) — rode "pnpm --filter widget build"`);
 }
 
+// Zip da extensão de navegador — distribuição pro time por link (chrome://extensions ->
+// carregar sem compactação), em vez de depender de um caminho de pasta na máquina de quem builda.
+const extensionZipFile = path.join(__dirname, "public/extension.zip");
+if (existsSync(extensionZipFile)) {
+  const extensionZipSource = readFileSync(extensionZipFile);
+  app.get("/extension.zip", (req, reply) => {
+    reply
+      .type("application/zip")
+      .header("content-disposition", 'attachment; filename="annotate-extension.zip"')
+      .send(extensionZipSource);
+  });
+} else {
+  app.log.warn(`extensão não buildada ainda (${extensionZipFile} não existe)`);
+}
+
 if (existsSync(dashboardPublicDir)) {
   await app.register(fastifyStatic, {
     root: dashboardPublicDir,
