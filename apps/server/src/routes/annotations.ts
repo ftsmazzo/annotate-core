@@ -40,6 +40,7 @@ export default async function annotationsRoutes(app: FastifyInstance) {
         domPath: input.domPath,
         computedStyles: input.computedStyles,
         boundingBox: input.boundingBox,
+        screenshotUrl: input.screenshotDataUrl,
         elementTextSnippet: input.elementTextSnippet,
         metadata: input.metadata ?? {},
       })

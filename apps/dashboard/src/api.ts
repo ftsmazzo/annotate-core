@@ -8,6 +8,7 @@ export interface Annotation {
   selector: string;
   domPath: unknown;
   computedStyles: Record<string, string> | null;
+  screenshotUrl: string | null;
   elementTextSnippet: string | null;
   resolvedSummary: string | null;
   resolvedBy: string | null;

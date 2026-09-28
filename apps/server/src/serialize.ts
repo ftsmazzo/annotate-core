@@ -16,6 +16,7 @@ export function serializeAnnotation(row: AnnotationRow) {
     domPath: row.domPath,
     computedStyles: row.computedStyles,
     boundingBox: row.boundingBox,
+    screenshotUrl: row.screenshotUrl,
     elementTextSnippet: row.elementTextSnippet,
     metadata: row.metadata,
     resolvedSummary: row.resolvedSummary,
@@ -23,6 +24,19 @@ export function serializeAnnotation(row: AnnotationRow) {
     resolvedAt: row.resolvedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+/**
+ * Mesma coisa, mas pro texto que volta pra um agente de IA via MCP — o screenshot em
+ * base64 pode passar de 100KB de texto, o que só enche o contexto do agente à toa (ele
+ * não "vê" a imagem de qualquer forma num content block de texto). Troca por um indicador.
+ */
+export function serializeAnnotationForAgent(row: AnnotationRow) {
+  const serialized = serializeAnnotation(row);
+  return {
+    ...serialized,
+    screenshotUrl: serialized.screenshotUrl ? "[screenshot disponível — ver no painel web]" : null,
   };
 }
 

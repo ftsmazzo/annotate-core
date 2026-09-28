@@ -14,6 +14,19 @@ function findMapping(mappings: SiteMapping[], hostname: string): SiteMapping | u
   return mappings.find((m) => hostname === m.hostname || hostname.endsWith(`.${m.hostname}`));
 }
 
+/** Pede pro background capturar a aba (content script não tem acesso a chrome.tabs.*). */
+function captureScreenshot(): Promise<string | null> {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "annotate:capture-screenshot" }, (response) => {
+      if (chrome.runtime.lastError || !response?.dataUrl) {
+        resolve(null);
+        return;
+      }
+      resolve(response.dataUrl);
+    });
+  });
+}
+
 chrome.storage.sync.get(["mappings"], async (data: { mappings?: SiteMapping[] }) => {
   const mapping = findMapping(data.mappings ?? [], location.hostname);
   if (!mapping) return; // site não configurado — sem lápis, sem risco de mandar pro lugar errado
@@ -35,13 +48,24 @@ chrome.storage.sync.get(["mappings"], async (data: { mappings?: SiteMapping[] })
   mountWidget(
     host,
     async ({ message, annotation }) => {
+      // Esconde o próprio widget (popover etc.) antes de capturar, senão a screenshot
+      // vem com a nossa UI em cima em vez de só a página/bug reportado.
+      const previousDisplay = host.style.display;
+      host.style.display = "none";
+      const screenshotDataUrl = await captureScreenshot();
+      host.style.display = previousDisplay;
+
       const res = await fetch(`${mapping.endpoint}/api/v1/annotations`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
           authorization: `Bearer ${mapping.token}`,
         },
-        body: JSON.stringify({ message, ...annotation }),
+        body: JSON.stringify({
+          message,
+          ...annotation,
+          ...(screenshotDataUrl ? { screenshotDataUrl } : {}),
+        }),
       });
       if (!res.ok) {
         const text = await res.text();

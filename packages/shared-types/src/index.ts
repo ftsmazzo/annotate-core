@@ -81,6 +81,10 @@ export const CreateAnnotationInput = z.object({
   boundingBox: BoundingBox.optional(),
   elementTextSnippet: z.string().max(500).optional(),
   metadata: AnnotationMetadata.optional(),
+  // Data URL (data:image/jpeg;base64,...) — só a extensão consegue capturar de verdade
+  // (chrome.tabs.captureVisibleTab, API privilegiada); o widget de <script> não tem acesso
+  // a isso, então fica opcional. Limite generoso o bastante pra um screenshot JPEG comprimido.
+  screenshotDataUrl: z.string().max(2_000_000).optional(),
 });
 export type CreateAnnotationInput = z.infer<typeof CreateAnnotationInput>;
 
@@ -96,6 +100,7 @@ export const Annotation = z.object({
   domPath: z.array(DomPathEntry),
   computedStyles: ComputedStyleSnapshot.nullable(),
   boundingBox: BoundingBox.nullable(),
+  screenshotUrl: z.string().nullable(),
   elementTextSnippet: z.string().nullable(),
   metadata: AnnotationMetadata,
   resolvedSummary: z.string().nullable(),

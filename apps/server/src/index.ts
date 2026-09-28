@@ -27,7 +27,9 @@ initObservability();
 // (node a partir de dist/, com src/ como irmão de dist/ no output do deploy).
 await migrate(db, { migrationsFolder: path.join(__dirname, "../src/db/migrations") });
 
-const app = Fastify({ logger: true });
+// Padrão do Fastify é 1MB — pequeno demais pro screenshot em base64 (data URL) que a
+// extensão manda junto da anotação.
+const app = Fastify({ logger: true, bodyLimit: 6 * 1024 * 1024 });
 
 app.setErrorHandler((err: FastifyError, req, reply) => {
   app.log.error(err);

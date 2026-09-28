@@ -3,7 +3,7 @@ import { z } from "zod";
 import { and, desc, eq, gt } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { annotations, comments, events } from "../db/schema.js";
-import { serializeAnnotation, serializeComment } from "../serialize.js";
+import { serializeAnnotation, serializeAnnotationForAgent, serializeComment } from "../serialize.js";
 import { recordEvent } from "../events.js";
 
 const StatusEnum = z.enum(["pending", "in_progress", "resolved", "wont_fix", "archived"]);
@@ -39,7 +39,7 @@ export function createMcpServer(projectId: string): McpServer {
         : rows;
       return {
         content: [
-          { type: "text", text: JSON.stringify(filtered.map(serializeAnnotation), null, 2) },
+          { type: "text", text: JSON.stringify(filtered.map(serializeAnnotationForAgent), null, 2) },
         ],
       };
     },
@@ -71,7 +71,7 @@ export function createMcpServer(projectId: string): McpServer {
           {
             type: "text",
             text: JSON.stringify(
-              { ...serializeAnnotation(row), comments: commentRows.map(serializeComment) },
+              { ...serializeAnnotationForAgent(row), comments: commentRows.map(serializeComment) },
               null,
               2,
             ),
@@ -129,7 +129,7 @@ export function createMcpServer(projectId: string): McpServer {
         payload: { annotation: serialized, previousStatus: existing.status },
       });
 
-      return { content: [{ type: "text", text: JSON.stringify(serialized, null, 2) }] };
+      return { content: [{ type: "text", text: JSON.stringify(serializeAnnotationForAgent(row), null, 2) }] };
     },
   );
 
@@ -161,7 +161,7 @@ export function createMcpServer(projectId: string): McpServer {
         type: "annotation.status_changed",
         payload: { annotation: serialized, previousStatus: existing.status },
       });
-      return { content: [{ type: "text", text: JSON.stringify(serialized, null, 2) }] };
+      return { content: [{ type: "text", text: JSON.stringify(serializeAnnotationForAgent(row), null, 2) }] };
     },
   );
 

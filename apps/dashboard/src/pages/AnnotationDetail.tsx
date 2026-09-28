@@ -77,6 +77,14 @@ export default function AnnotationDetail() {
             </div>
           )}
 
+          {annotation.screenshotUrl && (
+            <img
+              src={annotation.screenshotUrl}
+              alt="Screenshot da página no momento do report"
+              style={{ maxWidth: "100%", borderRadius: 10, border: "1px solid var(--border)", marginTop: 14 }}
+            />
+          )}
+
           {annotation.elementTextSnippet && (
             <details style={{ marginTop: 14 }}>
               <summary className="hint">Texto do elemento</summary>
