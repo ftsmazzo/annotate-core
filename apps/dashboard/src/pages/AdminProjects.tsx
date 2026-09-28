@@ -258,7 +258,7 @@ export default function AdminProjects() {
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <a className="open-link" href={`/p/${p.slug}`}>
+                <a className="open-link" href={`/admin/p/${p.slug}`}>
                   Ver anotações
                 </a>
                 <button
