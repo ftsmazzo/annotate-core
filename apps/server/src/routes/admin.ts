@@ -1,10 +1,11 @@
 import { timingSafeEqual } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { createProjectWithTokens } from "../admin.js";
 import { db } from "../db/client.js";
-import { projects } from "../db/schema.js";
+import { annotations, projects } from "../db/schema.js";
+import { serializeAnnotation } from "../serialize.js";
 
 const CreateProjectInput = z.object({
   name: z.string().min(1).max(120),
@@ -34,6 +35,31 @@ export default async function adminRoutes(app: FastifyInstance) {
       .from(projects)
       .orderBy(desc(projects.createdAt));
     return { projects: rows };
+  });
+
+  // Visão de admin sobre QUALQUER projeto, sem precisar do access token específico dele —
+  // útil pra diagnosticar "chegou ou não" sem ter que caçar qual token é de qual projeto.
+  app.get("/api/v1/admin/projects/:slug/annotations", async (req, reply) => {
+    if (!isValidAdminToken(req.headers["x-admin-token"] as string | undefined)) {
+      return reply.code(401).send({ error: "invalid_admin_token" });
+    }
+    const { slug } = req.params as { slug: string };
+    const query = req.query as { status?: string };
+
+    const [project] = await db.select().from(projects).where(eq(projects.slug, slug)).limit(1);
+    if (!project) return reply.code(404).send({ error: "project_not_found" });
+
+    const conditions = [eq(annotations.projectId, project.id)];
+    if (query.status) conditions.push(eq(annotations.status, query.status as never));
+
+    const rows = await db
+      .select()
+      .from(annotations)
+      .where(and(...conditions))
+      .orderBy(desc(annotations.createdAt))
+      .limit(50);
+
+    return { project: { id: project.id, name: project.name, slug: project.slug }, annotations: rows.map(serializeAnnotation) };
   });
 
   app.post("/api/v1/admin/projects", async (req, reply) => {
