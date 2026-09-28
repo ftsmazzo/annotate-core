@@ -63,3 +63,13 @@ export function deleteProject(slug: string) {
 export function regenerateTokens(slug: string) {
   return adminFetch<CreatedProject>(`/api/v1/admin/projects/${slug}/regenerate-tokens`, { method: "POST" });
 }
+
+export interface ProjectConfig {
+  project: { id: string; name: string; slug: string };
+  widgetToken: string | null;
+  accessToken: string | null;
+}
+
+export function getProjectConfig(slug: string) {
+  return adminFetch<ProjectConfig>(`/api/v1/admin/projects/${slug}/config`);
+}

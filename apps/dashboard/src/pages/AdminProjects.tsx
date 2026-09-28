@@ -4,7 +4,6 @@ import {
   deleteProject,
   getAdminToken,
   listProjects,
-  regenerateTokens,
   setAdminToken,
   type CreatedProject,
   type ProjectSummary,
@@ -78,19 +77,6 @@ export default function AdminProjects() {
       loadProjects();
     } catch {
       setError(`Falha ao excluir "${confirmTarget.name}".`);
-    } finally {
-      setBusySlug(null);
-    }
-  }
-
-  async function handleRegenerate(slug: string) {
-    setBusySlug(slug);
-    setError("");
-    try {
-      const result = await regenerateTokens(slug);
-      setCreated(result);
-    } catch {
-      setError("Falha ao gerar novo token — o projeto ainda existe, só tente de novo.");
     } finally {
       setBusySlug(null);
     }
@@ -261,13 +247,9 @@ export default function AdminProjects() {
                 <a className="open-link" href={`/admin/p/${p.slug}`}>
                   Ver anotações
                 </a>
-                <button
-                  onClick={() => handleRegenerate(p.slug)}
-                  disabled={busySlug === p.slug}
-                  style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--primary)", padding: "6px 12px", fontSize: 12.5 }}
-                >
-                  {busySlug === p.slug ? "Gerando…" : "Gerar novo link"}
-                </button>
+                <a className="open-link" href={`/admin/p/${p.slug}/config`}>
+                  Configurações
+                </a>
                 <button
                   onClick={() => setConfirmTarget({ slug: p.slug, name: p.name })}
                   style={{

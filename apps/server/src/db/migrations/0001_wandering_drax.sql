@@ -1,0 +1,1 @@
+ALTER TABLE "project_tokens" ADD COLUMN "token_plain" text;

@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "./db/client.js";
 import { projects, projectTokens } from "./db/schema.js";
 import { hashToken, tokenPrefix } from "./plugins/auth.js";
@@ -20,6 +20,7 @@ async function insertTokenPair(projectId: string) {
     {
       projectId,
       tokenHash: hashToken(widgetToken),
+      tokenPlain: widgetToken,
       tokenPrefix: tokenPrefix(widgetToken),
       kind: "widget",
       label: "widget público (embutido no site)",
@@ -27,6 +28,7 @@ async function insertTokenPair(projectId: string) {
     {
       projectId,
       tokenHash: hashToken(accessToken),
+      tokenPlain: accessToken,
       tokenPrefix: tokenPrefix(accessToken),
       kind: "access",
       label: "acesso do time + agentes (MCP/REST)",
@@ -34,6 +36,25 @@ async function insertTokenPair(projectId: string) {
   ]);
 
   return { widgetToken, accessToken };
+}
+
+/**
+ * Tokens ATIVOS de um projeto, pra reexibir a tela de configuração a qualquer momento
+ * (conectar mais uma ferramenta — Cursor, Lovable — sem precisar regenerar e derrubar
+ * as conexões que já usam o token atual).
+ */
+export async function getActiveTokensForProject(slug: string) {
+  const [project] = await db.select().from(projects).where(eq(projects.slug, slug)).limit(1);
+  if (!project) return null;
+
+  const rows = await db
+    .select({ kind: projectTokens.kind, tokenPlain: projectTokens.tokenPlain })
+    .from(projectTokens)
+    .where(and(eq(projectTokens.projectId, project.id), isNull(projectTokens.revokedAt)));
+
+  const widgetToken = rows.find((r) => r.kind === "widget")?.tokenPlain ?? null;
+  const accessToken = rows.find((r) => r.kind === "access")?.tokenPlain ?? null;
+  return { project, widgetToken, accessToken };
 }
 
 /**

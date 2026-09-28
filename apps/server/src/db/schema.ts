@@ -29,6 +29,11 @@ export const projectTokens = pgTable(
       .notNull()
       .references(() => projects.id, { onDelete: "cascade" }),
     tokenHash: text("token_hash").notNull(),
+    // Guardado também em claro (não só hash) de propósito: o usuário precisa ver o mesmo
+    // token de novo pra conectar várias ferramentas (Cursor, Lovable, extensão) sem ter que
+    // regenerar — o que revogaria as conexões já feitas. Só legível via ADMIN_TOKEN, que já
+    // tem poder de regenerar/revogar de qualquer forma, então não abre uma superfície nova.
+    tokenPlain: text("token_plain"),
     tokenPrefix: text("token_prefix").notNull(),
     kind: text("kind", { enum: ["widget", "access"] }).notNull(),
     label: text("label"),
