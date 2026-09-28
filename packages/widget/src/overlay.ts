@@ -1,4 +1,10 @@
 import { buildUniqueSelector } from "./selector.js";
+
+function escapeHtml(text: string): string {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
 import {
   captureBoundingBox,
   captureComputedStyles,
@@ -25,13 +31,14 @@ export interface CapturedAnnotation {
 type SubmitHandler = (input: { message: string; annotation: CapturedAnnotation }) => Promise<void>;
 
 /** Monta a UI do widget dentro de um Shadow DOM, isolada do CSS do site hospedeiro. */
-export function mountWidget(host: HTMLElement, onSubmit: SubmitHandler) {
+export function mountWidget(host: HTMLElement, onSubmit: SubmitHandler, projectName?: string) {
   const shadow = host.attachShadow({ mode: "open" });
   shadow.innerHTML = `
     <style>${styles}</style>
     <button id="toggle" title="Reportar problema visual">${pencilIcon}</button>
     <div id="hover-box"></div>
     <div id="popover" hidden>
+      ${projectName ? `<div id="project-badge">Reportando pro projeto: <strong>${escapeHtml(projectName)}</strong></div>` : ""}
       <textarea id="message" placeholder="O que está errado aqui?"></textarea>
       <div id="actions">
         <button id="cancel">Cancelar</button>
@@ -174,6 +181,10 @@ const styles = `
     box-shadow: 0 4px 20px rgba(0,0,0,.25); font-family: system-ui, sans-serif;
   }
   #popover[hidden] { display: none; }
+  #project-badge {
+    font-size: 11px; color: #6b7280; margin-bottom: 6px; padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
+  }
   textarea {
     width: 100%; height: 70px; box-sizing: border-box; padding: 8px;
     border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; resize: vertical;

@@ -14,6 +14,7 @@ import eventsRoutes from "./routes/events.js";
 import webhooksRoutes from "./routes/webhooks.js";
 import mcpRoutes from "./routes/mcp.js";
 import adminRoutes from "./routes/admin.js";
+import whoamiRoutes from "./routes/whoami.js";
 import { processDueWebhookDeliveries } from "./webhooks/dispatcher.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -45,6 +46,7 @@ await app.register(eventsRoutes);
 await app.register(webhooksRoutes);
 await app.register(mcpRoutes);
 await app.register(adminRoutes);
+await app.register(whoamiRoutes);
 
 app.get("/health", async () => ({ ok: true }));
 

@@ -4,7 +4,7 @@ function getCurrentScript(): HTMLScriptElement | null {
   return document.currentScript as HTMLScriptElement | null;
 }
 
-function init() {
+async function init() {
   const script = getCurrentScript();
   const projectToken = script?.dataset.project;
   const endpoint = script?.dataset.endpoint ?? new URL(script?.src ?? location.href).origin;
@@ -14,6 +14,18 @@ function init() {
       "[annotate-core] widget carregado sem data-project — veja https://<seu-dominio>/docs",
     );
     return;
+  }
+
+  // Mostra "reportando pro projeto: X" antes de enviar — evita confusão quando
+  // a mesma pessoa tem tokens de mais de um projeto configurados em lugares diferentes.
+  let projectName: string | undefined;
+  try {
+    const whoami = await fetch(`${endpoint}/api/v1/whoami`, {
+      headers: { authorization: `Bearer ${projectToken}` },
+    });
+    if (whoami.ok) projectName = (await whoami.json()).name;
+  } catch {
+    // Sem nome exibido não impede o uso — só perde a confirmação visual extra.
   }
 
   const host = document.createElement("div");
@@ -34,7 +46,7 @@ function init() {
       console.error("[annotate-core] falha ao enviar anotação", text);
       throw new Error(text);
     }
-  });
+  }, projectName);
 }
 
 if (document.readyState === "loading") {

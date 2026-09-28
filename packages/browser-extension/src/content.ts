@@ -1,34 +1,54 @@
-// Reaproveita 100% da lógica de captura/overlay do widget (packages/widget/src) —
-// a diferença aqui é só de onde vem o token/endpoint (chrome.storage, configurado uma
-// vez no popup) em vez de um data-attribute de <script>. Ativa em toda página aberta,
-// sem exigir nenhuma edição no código do site.
+// Reaproveita 100% da lógica de captura/overlay do widget (packages/widget/src). Diferente
+// da v1 (um token global pra qualquer aba), agora cada domínio tem seu próprio projeto
+// configurado no popup — se o site atual não estiver mapeado, o lápis simplesmente não
+// aparece, em vez de arriscar mandar a anotação pro projeto errado.
 import { mountWidget } from "../../widget/src/overlay.js";
 
-interface Config {
-  endpoint?: string;
-  token?: string;
+interface SiteMapping {
+  hostname: string;
+  endpoint: string;
+  token: string;
 }
 
-chrome.storage.sync.get(["endpoint", "token"], (cfg: Config) => {
-  if (!cfg.endpoint || !cfg.token) return; // extensão instalada mas ainda não configurada
+function findMapping(mappings: SiteMapping[], hostname: string): SiteMapping | undefined {
+  return mappings.find((m) => hostname === m.hostname || hostname.endsWith(`.${m.hostname}`));
+}
+
+chrome.storage.sync.get(["mappings"], async (data: { mappings?: SiteMapping[] }) => {
+  const mapping = findMapping(data.mappings ?? [], location.hostname);
+  if (!mapping) return; // site não configurado — sem lápis, sem risco de mandar pro lugar errado
+
+  let projectName: string | undefined;
+  try {
+    const whoami = await fetch(`${mapping.endpoint}/api/v1/whoami`, {
+      headers: { authorization: `Bearer ${mapping.token}` },
+    });
+    if (whoami.ok) projectName = (await whoami.json()).name;
+  } catch {
+    // segue sem o nome exibido
+  }
 
   const host = document.createElement("div");
   host.id = "annotate-ext-widget";
   document.documentElement.appendChild(host);
 
-  mountWidget(host, async ({ message, annotation }) => {
-    const res = await fetch(`${cfg.endpoint}/api/v1/annotations`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${cfg.token}`,
-      },
-      body: JSON.stringify({ message, ...annotation }),
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      console.error("[annotate] falha ao enviar anotação", text);
-      throw new Error(text);
-    }
-  });
+  mountWidget(
+    host,
+    async ({ message, annotation }) => {
+      const res = await fetch(`${mapping.endpoint}/api/v1/annotations`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${mapping.token}`,
+        },
+        body: JSON.stringify({ message, ...annotation }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("[annotate] falha ao enviar anotação", text);
+        throw new Error(text);
+      }
+    },
+    projectName,
+  );
 });
