@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import Fastify, { type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
@@ -54,22 +54,22 @@ app.get("/health", async () => ({ ok: true }));
 const widgetPublicDir = path.join(__dirname, "public/widget");
 const dashboardPublicDir = path.join(__dirname, "public/dashboard");
 
-if (existsSync(widgetPublicDir)) {
-  await app.register(fastifyStatic, {
-    root: widgetPublicDir,
-    prefix: "/widget.js",
-    index: false,
-    decorateReply: false,
+// Lido direto do disco (em vez de reply.sendFile) pra não depender do decorator do
+// @fastify/static registrado mais abaixo (que só existe se o dashboard também tiver sido buildado).
+const widgetFile = path.join(widgetPublicDir, "widget.js");
+if (existsSync(widgetFile)) {
+  const widgetSource = readFileSync(widgetFile);
+  app.get("/widget.js", (req, reply) => {
+    reply.type("application/javascript").send(widgetSource);
   });
 } else {
-  app.log.warn(`widget não buildado ainda (${widgetPublicDir} não existe) — rode "pnpm --filter widget build"`);
+  app.log.warn(`widget não buildado ainda (${widgetFile} não existe) — rode "pnpm --filter widget build"`);
 }
 
 if (existsSync(dashboardPublicDir)) {
   await app.register(fastifyStatic, {
     root: dashboardPublicDir,
     prefix: "/",
-    decorateReply: false,
   });
 } else {
   app.log.warn(`dashboard não buildado ainda (${dashboardPublicDir} não existe) — rode "pnpm --filter dashboard build"`);
